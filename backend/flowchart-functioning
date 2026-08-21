@@ -1,0 +1,28 @@
+STAFF
+  │
+  │ Scan QR
+  ▼
+KIOSK
+  │
+  │ "Print badge for A001"
+  ▼
+BACKEND
+  │
+  │ REST API request
+  ▼
+PRINTER
+  │
+  │ "Printing..."
+  │
+  │      ← WE WAIT
+  │
+  │ "Success"
+  ▼
+BACKEND
+  │
+  │ Mark A001 checked in
+  ▼
+KIOSK
+  │
+  ▼
+"✓ CHECKED IN"
