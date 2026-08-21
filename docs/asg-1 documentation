@@ -1,0 +1,22 @@
+MP-03.1 — Webhook Verification
+
+Technology learned:
+HMAC-based webhook signature verification.
+
+What I learned:
+A webhook can include a cryptographic signature generated using a
+shared secret and the webhook payload. The receiving server can
+generate its own expected signature and compare it with the received
+signature.
+
+Test 1:
+Used the generated signature as the received signature.
+Result: True.
+
+Test 2:
+Replaced the received signature with "wrong-signature".
+Result: False.
+
+Key learning:
+The server does not need to trust the webhook payload blindly.
+It can verify that the sender knew the shared secret.
