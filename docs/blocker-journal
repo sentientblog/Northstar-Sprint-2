@@ -1,0 +1,67 @@
+MP-03 — Webhook Verification & HMAC
+
+Technology learned:
+HMAC-based webhook authentication/verification using Python.
+
+Why I chose/was assigned this technology:
+I had little/no prior practical experience implementing webhook
+verification and had not previously built an authenticated webhook
+endpoint.
+
+What I learned:
+A webhook is an HTTP request sent by one system to notify another
+system that an event has occurred. The receiving system should not
+blindly trust the request. HMAC(in python) can be used to verify that the sender
+knows a shared secret.
+
+The sender generates an HMAC signature from the request body and
+shared secret. The receiver independently generates the expected
+signature using the same secret and compares the two signatures.
+
+Mini-prototype:
+I first implemented HMAC signature generation and verification in
+webhook_test.py without FastAPI.
+
+Tests:
+1. Matching generated and received signatures → True.
+2. Deliberately incorrect signature → False.
+
+Implementation:
+I then implemented a FastAPI POST endpoint:
+
+POST /webhook/print-complete
+
+The endpoint:
+- reads the incoming request body
+- reads the X-Signature header
+- generates the expected HMAC-SHA256 signature
+- compares the received and expected signatures
+- accepts valid signatures
+- rejects invalid signatures
+- rejects requests with no signature
+
+I created a fake printer program to send an actual HTTP POST request
+to the FastAPI webhook.
+
+Troubleshooting:
+The initial webhook request returned HTTP 500. I investigated the
+Uvicorn server output and identified the problem.
+
+The webhook signature initially failed verification because the shared
+secret used by the backend and fake printer did not match exactly.
+The backend used "mys-super-secret" while the fake printer used
+"my-super-secret". Since HMAC depends on the exact secret and message,
+the signatures were different.
+
+I corrected the shared secret so both systems used the same value.
+
+Final verification:
+- Correct signature → accepted
+- Incorrect signature → rejected
+- Missing signature → rejected
+
+Key takeaway:
+The webhook is not inherently authenticated simply because it is an
+HTTP endpoint. Authentication/verification has to be implemented.
+HMAC allows the receiving server to verify that the sender knows the
+shared secret without sending the secret itself in the request.
