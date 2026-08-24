@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Solstice Events | Check-In</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-family: Arial, sans-serif;
+            background: #f4f6f8;
+        }
+
+        .container {
+            width: 420px;
+            padding: 40px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
+            text-align: center;
+        }
+
+        h1 {
+            margin-bottom: 5px;
+        }
+
+        .subtitle {
+            margin-top: 0;
+            margin-bottom: 30px;
+            color: #666;
+        }
+
+        label {
+            display: block;
+            text-align: left;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 16px;
+            margin-bottom: 15px;
+        }
+
+        button {
+            width: 100%;
+            padding: 13px;
+            border: none;
+            border-radius: 6px;
+            background: #111827;
+            color: white;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #1f2937;
+        }
+
+        button:disabled {
+            background: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 6px;
+            background: #f3f4f6;
+            min-height: 50px;
+        }
+
+        .pending {
+            color: #92400e;
+            background: #fef3c7 !important;
+        }
+
+        .success {
+            color: #166534;
+            background: #dcfce7 !important;
+        }
+
+        .error {
+            color: #991b1b;
+            background: #fee2e2 !important;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Solstice Events</h1>
+
+    <p class="subtitle">Event Check-In</p>
+
+    <label for="attendeeId">Attendee ID</label>
+
+    <input
+            type="text"
+            id="attendeeId"
+            placeholder="e.g. A001"
+    >
+
+    <button id="checkInButton">
+        Check In
+    </button>
+
+    <div id="result">
+        Enter your attendee ID to begin.
+    </div>
+
+</div>
+
+<script>
+
+    let statusInterval = null;
+
+    async function checkIn() {
+
+        const attendeeId =
+            document.getElementById("attendeeId").value.trim();
+
+        const result =
+            document.getElementById("result");
+
+        const button =
+            document.getElementById("checkInButton");
+
+        if (!attendeeId) {
+            result.textContent = "Please enter an attendee ID.";
+            result.className = "error";
+            return;
+        }
+
+        if (statusInterval !== null) {
+            clearInterval(statusInterval);
+            statusInterval = null;
+        }
+
+        button.disabled = true;
+
+        try {
+
+            const response = await fetch(
+                `http://127.0.0.1:8000/check-in/${attendeeId}`,
+                {
+                    method: "POST"
+                }
+            );
+
+            const data = await response.json();
+
+            if (data.status === "pending") {
+
+                result.textContent =
+                    `Print pending for ${data.attendee_id}...`;
+
+                result.className = "pending";
+
+                monitorStatus(attendeeId);
+
+            } else {
+
+                result.textContent = data.message;
+                result.className = "error";
+
+                button.disabled = false;
+            }
+
+        } catch (error) {
+
+            console.error(error);
+
+            result.textContent =
+                "Unable to connect to the check-in service.";
+
+            result.className = "error";
+
+            button.disabled = false;
+        }
+    }
+
+
+    function monitorStatus(attendeeId) {
+
+        statusInterval = setInterval(async () => {
+
+            try {
+
+                const response = await fetch(
+                    `http://127.0.0.1:8000/attendee/${attendeeId}`
+                );
+
+                const data = await response.json();
+
+                if (data.status === "CHECKED_IN") {
+
+                    const result =
+                        document.getElementById("result");
+
+                    result.textContent =
+                        `✓ Checked In — Welcome, ${data.name}!`;
+
+                    result.className = "success";
+
+                    document.getElementById(
+                        "checkInButton"
+                    ).disabled = false;
+
+                    clearInterval(statusInterval);
+
+                    statusInterval = null;
+                }
+
+            } catch (error) {
+
+                console.error(
+                    "Status check failed:",
+                    error
+                );
+            }
+
+        }, 2000);
+    }
+
+
+    document.getElementById(
+        "checkInButton"
+    ).onclick = checkIn;
+
+</script>
+
+</body>
+</html>
