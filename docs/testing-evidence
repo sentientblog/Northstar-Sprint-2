@@ -1,0 +1,87 @@
+# Testing Evidence
+
+## 1. Purpose
+
+Testing was performed to verify that the asynchronous check-in implementation satisfies the original attendee-management requirements while also satisfying the mid-sprint asynchronous printer pivot.
+
+## 2. Backend Tests
+
+| Test                           | Expected Result                  | Result |
+| ------------------------------ | -------------------------------- | ------ |
+| Retrieve valid attendee `A001` | Attendee details returned        | PASS   |
+| Retrieve unknown attendee      | Attendee-not-found response      | PASS   |
+| Submit valid check-in          | Attendee changes to `PENDING`    | PASS   |
+| Submit duplicate check-in      | Request rejected                 | PASS   |
+| Retrieve print queue           | Pending print job returned       | PASS   |
+| Empty print queue              | Empty queue response returned    | PASS   |
+| Valid webhook signature        | Webhook accepted                 | PASS   |
+| Missing webhook signature      | Webhook rejected                 | PASS   |
+| Invalid webhook signature      | Webhook rejected                 | PASS   |
+| Unknown attendee in webhook    | Webhook rejected                 | PASS   |
+| Incorrect job ID               | Webhook rejected                 | PASS   |
+| Valid pending job completion   | Attendee changes to `CHECKED_IN` | PASS   |
+
+## 3. End-to-End Test
+
+The complete workflow was tested using the frontend, FastAPI backend, print queue, and fake printer.
+
+The tested sequence was:
+
+1. An attendee ID was entered into the kiosk.
+2. The frontend submitted the check-in request.
+3. The backend validated the attendee.
+4. A unique print job was created.
+5. The attendee entered the `PENDING` state.
+6. The print job was placed in the simulated queue.
+7. The fake printer retrieved the queued job.
+8. The fake printer generated an HMAC signature.
+9. The fake printer sent the completion webhook.
+10. The backend verified the webhook signature.
+11. The backend verified the attendee and job ID.
+12. The attendee changed from `PENDING` to `CHECKED_IN`.
+13. The frontend detected the updated status and displayed the successful check-in message.
+
+**End-to-end result: PASS**
+
+## 4. Duplicate-Scan Test
+
+A second check-in request was submitted for an attendee whose status was already `PENDING`.
+
+The backend rejected the request with an `Attendee already has a check-in request` response.
+
+This confirms that the asynchronous model did not remove the original duplicate-scan protection.
+
+**Result: PASS**
+
+## 5. Webhook Security Tests
+
+The webhook was tested with:
+
+* A valid HMAC signature.
+* A missing signature.
+* An invalid signature.
+* A mismatched job ID.
+
+Invalid signatures were rejected before the webhook could update attendee state.
+
+A mismatched job ID was also rejected, preventing a completion event for one print job from incorrectly confirming another attendee.
+
+**Result: PASS**
+
+## 6. Frontend Test
+
+The frontend was tested by opening `index.html` in a browser while the FastAPI server was running.
+
+The UI correctly displayed:
+
+`PENDING` while the print job was waiting for completion.
+
+After the fake printer sent a valid completion webhook, the frontend detected the updated backend state and displayed the attendee as checked in.
+
+**Result: PASS**
+
+## 7. Final Assessment
+
+The tests confirm that the final implementation supports the required asynchronous workflow while retaining attendee validation and duplicate-scan protection.
+
+The implementation was tested as a complete flow rather than only testing individual endpoints.
