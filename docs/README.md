@@ -81,7 +81,8 @@ From the project directory:
 ```terminal command
 python -m uvicorn main:app --reload
 
-## Running from the frontend the frontend
+
+## Running the frontend
 
 http://127.0.0.1:8000 
 
