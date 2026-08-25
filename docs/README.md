@@ -78,5 +78,12 @@ The `out_of_order_test.py` script demonstrates callbacks arriving in a different
 
 From the project directory:
 
-```bash
+```terminal command
 python -m uvicorn main:app --reload
+
+## Running from the frontend the frontend
+
+http://127.0.0.1:8000 
+
+Disclaimer: the frontend requires the backend to be run locally through a terminal for it to work
+
